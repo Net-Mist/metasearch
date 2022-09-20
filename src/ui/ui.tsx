@@ -274,7 +274,7 @@ const handleSearch = async (
     ? window.history.pushState(null, "", path)
     : window.history.replaceState(null, "", path);
   TRACKING_ID && window.gtag?.("config", TRACKING_ID, { page_path: path });
-  document.title = `${q} - Metasearch`;
+  document.title = `${q} - ContentSearch`;
 
   // Clear results
   dispatch(undefined);
@@ -383,7 +383,7 @@ const App = () => {
             ?.scrollTo({ behavior: "smooth", top: 0 });
         }}
       >
-        Metasearch
+        ContentSearch
       </div>
       <Header
         onChange={e => setQ(e.target.value)}

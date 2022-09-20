@@ -27,7 +27,10 @@ const engine: Engine = {
   }) => {
     const axiosClient = axios.create({
       baseURL: origin,
-      headers: { Authorization: `bearer ${token}` },
+      headers: {
+        Authorization: `bearer ${token}`,
+        Accept: "application/vnd.github.text-match+json",
+      },
     });
     client = axiosClient;
 
@@ -98,7 +101,7 @@ const engine: Engine = {
             .filter(
               r =>
                 !r.isArchived &&
-                !r.isFork &&
+                // !r.isFork &&
                 [r.description, r.name].some(s => fuzzyIncludes(s, q)),
             )
             .sort((a, b) => (a.name > b.name ? 1 : -1))
@@ -109,6 +112,46 @@ const engine: Engine = {
               title: `Repo ${org}/${r.name}`,
               url: `https://github.com/${org}/${r.name}`,
             }));
+        })(),
+        // Search code
+        (async () => {
+          if (!(client && org)) {
+            throw Error("Engine not initialized");
+          }
+
+          try {
+            const data: {
+              items: {
+                html_url: string; // url title
+                text_matches: { fragment: string }[]; // snippet
+              }[];
+            } = (
+              await client.get("/search/code", {
+                params: {
+                  // per_page: 100,
+                  q: /\b(is|author|org):\w/.test(q)
+                    ? /\borg:\w/.test(q)
+                      ? q
+                      : `org:${org} ${q}`
+                    : `org:${org} "${escapeQuotes(q)}"`,
+                },
+              })
+            ).data;
+            
+            return data.items.map((item) => ({
+              modified: Date.now(),
+              snippet:
+                item.text_matches.reduce(
+                  (previousValue, currentValue) =>
+                    previousValue + currentValue.fragment,
+                  "<blockquote>"
+                ) + "</blockquote>",
+              title: "Code in " + item.html_url,
+              url: item.html_url,
+            }));
+          } catch {
+            return [];
+          }
         })(),
         // Search issues and pull requests
         (async () => {
