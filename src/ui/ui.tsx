@@ -284,6 +284,10 @@ const handleSearch = async (
     q.replace(/\W|_/g, "").split("").join("(\\W|_)*"),
     "gi",
   );
+
+  // TODO: change type to save also engine.id
+  let allResults: Result[] = []
+
   await Promise.all(
     Object.values(ENGINES).map(async engine => {
       if (engine.id == "best" || engine.id == "summary")
@@ -313,39 +317,68 @@ const handleSearch = async (
       }
 
       dispatch({ elapsedMs: Date.now() - start, engineId: engine.id, results });
+      if (engine.id == "confluence" || engine.id == "jira"){
+        allResults = allResults.concat(results);
+      }
     }),
   ).then( async () => {
     const start = Date.now()
     // call python server
     console.log("call python server");
+    // console.log(JSON.stringify({
+    //   search_result: allResults,
+    //   query: q
+    // }));
+    // const best_results: {items: {text: string, score: number, result: Result}[]} = await (await fetch(`http://127.0.0.1:8000/rank`,{
+    //   method: 'POST',
+    //   mode: 'no-cors',
+    //   cache: 'no-cache',
+    //   headers: {
+    //     'Content-Type': 'text/plain'
+    //     // 'Content-Type': 'application/json'
+    //   },
+    //   body: JSON.stringify({
+    //     search_result: allResults,
+    //     query: q
+    //   })
+    // })).json();
+    // console.log("python answered")
     await new Promise(r => setTimeout(r, 2000));
     console.log("call python server: done");
-    const results = [{
-      url : "https://raphael.com/plop",
-      title: "github",
-      relevance: 0.42,
-      snippet : "hello world"
+    const best_results = [{
+      url : "https://contentsquare.atlassian.net/browse/PROG-1695",
+      title: "[Auto-mapping-ns] - Implement the page conditions / naming Step",
+      relevance: 0.058823529411764705,
+      snippet : "Implement the second step of the automapping project"
     },
     {
-      url : "https://raphael.com/plip",
-      title: "github",
-      relevance: 0.24,
-      snippet : "world hello"
+      url : "https://contentsquare.atlassian.net/browse/APP-26940",
+      title: "APP-26940: AAU I want to access the detailed automapping conditions info",
+      relevance: 0.0392156862745098,
+      snippet : "Given that I launched the automapping algo based on the term builder\r\n\r\nThen I can access in the same modale (as a step 2)\r\n\r\nThe list of page groups and conditions \r\n\r\nAnd the detailed list of pages for the undefined groups"
+    },
+    {
+      url : "https://contentsquare.atlassian.net/browse/AM-782",
+      title: "AM-782: Chatamart (EU, US) access request",
+      relevance: 0.037037037037037035,
+      snippet : "I'm part of the dt-interface-simplify team and we're currently working on the automapping project which requires us to have access to chatamart."
     }]
-    dispatch({ elapsedMs: Date.now() - start, engineId: "best", results });
+    dispatch({ elapsedMs: Date.now() - start, engineId: "best", results: best_results});
+    // dispatch({ elapsedMs: Date.now() - start, engineId: "best", results: best_results.items.map(i => i.result) });
     console.log("promise done");
-    return results
+    // return best_results
   }
-  ).then(async () => {
+  ).then(async (best_results) => {
     const start = Date.now()
     // call python server
     console.log("call python server 2");
+    console.log(best_results);
     await new Promise(r => setTimeout(r, 1000));
     console.log("call python server 2: done");
     const results = [{
       url : "https://raphael.com/plop",
-      title: "Summary",
-      snippet : "random summary"
+      title: "",
+      snippet : "The mapping module is a super time consuming feature that is a massive blocker to our product Adoption . The project started in Q3, Data scientist team worked on an algo that would automatically clusters URLs and build conditions for each group identified"
     }]
     dispatch({ elapsedMs: Date.now() - start, engineId: "summary", results });
     console.log("summary done");
