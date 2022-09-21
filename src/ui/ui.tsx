@@ -178,7 +178,7 @@ const Results = ({
   sortMode: SortMode;
 }) => (
   <div className="results">
-    {resultGroups
+    {resultGroups.slice().reverse()
       .filter(rg => rg.results.length)
       .map(({ elapsedMs, engineId, results }) => {
         const showResults = !hiddenEngines.includes(engineId);
@@ -286,6 +286,8 @@ const handleSearch = async (
   );
   await Promise.all(
     Object.values(ENGINES).map(async engine => {
+      if (engine.id == "best" || engine.id == "summary")
+        return;
       // Fetch results
       const start = Date.now();
       const results = await getResults(engine.id, q);
@@ -312,6 +314,44 @@ const handleSearch = async (
 
       dispatch({ elapsedMs: Date.now() - start, engineId: engine.id, results });
     }),
+  ).then( async () => {
+    const start = Date.now()
+    // call python server
+    console.log("call python server");
+    await new Promise(r => setTimeout(r, 2000));
+    console.log("call python server: done");
+    const results = [{
+      url : "https://raphael.com/plop",
+      title: "github",
+      relevance: 0.42,
+      snippet : "hello world"
+    },
+    {
+      url : "https://raphael.com/plip",
+      title: "github",
+      relevance: 0.24,
+      snippet : "world hello"
+    }]
+    dispatch({ elapsedMs: Date.now() - start, engineId: "best", results });
+    console.log("promise done");
+    return results
+  }
+  ).then(async () => {
+    const start = Date.now()
+    // call python server
+    console.log("call python server 2");
+    await new Promise(r => setTimeout(r, 1000));
+    console.log("call python server 2: done");
+    const results = [{
+      url : "https://raphael.com/plop",
+      title: "Summary",
+      snippet : "random summary"
+    }]
+    dispatch({ elapsedMs: Date.now() - start, engineId: "summary", results });
+    console.log("summary done");
+    return results
+  }
+    
   );
 };
 

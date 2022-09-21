@@ -117,7 +117,10 @@ ${JSON.stringify(data)}`);
     "dist/index.html",
     await ejs.renderFile("src/ui/index.html", {
       metasearch: {
-        ENGINES: engineMap,
+        ENGINES: {...engineMap, 
+          best: {id: "best", name: "Best", isSnippetLarge: true}, 
+          summary: {id: "summary", name: "Summary", isSnippetLarge: true}
+        },
         FOOTER: config.footer,
         TRACKING_ID: config.trackingId,
       },
